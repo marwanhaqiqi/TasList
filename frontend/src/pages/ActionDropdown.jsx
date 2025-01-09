@@ -1,25 +1,10 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
-import TaskService from "../services/Task";
-import { useAuth } from "../contexts/AuthContext";
 
-const ActionDropdown = ({ onChangeStatus }) => {
+const ActionDropdown = ({ onChangeStatus, onDelete, onEdit }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const { token } = useAuth();
-
   const toggleDropdown = () => setIsOpen(!isOpen);
-
-  const onDelete = async (id) => {
-    try {
-      await TaskService.taskDelete(token, id); // Hapus data berdasarkan ID
-      // onClose(); // Tutup modal setelah penghapusan berhasil
-      console.log("Data berhasil dihapus");
-    } catch (error) {
-      console.error("Error deleting data:", error);
-      // Tambahkan logika error handling di sini jika diperlukan
-    }
-  };
 
   return (
     <div className="relative">
@@ -63,8 +48,7 @@ const ActionDropdown = ({ onChangeStatus }) => {
           <div className="border-t"></div>
           <button
             onClick={() => {
-              onChangeStatus("completed");
-              setIsOpen(false);
+              onEdit();
             }}
             className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
           >
@@ -90,6 +74,7 @@ const ActionDropdown = ({ onChangeStatus }) => {
 ActionDropdown.propTypes = {
   onChangeStatus: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
 };
 
 export default ActionDropdown;

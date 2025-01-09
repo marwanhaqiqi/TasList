@@ -14,6 +14,19 @@ const taskIndex = (token) =>
     },
   });
 
+const taskUpdate = (token) =>
+  useMutation({
+    mutationFn: async (data) => {
+      const response = await axios.put(`${url}/tasks/${data.id}`, data.data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      return response;
+    },
+  });
+
 const taskStore = (token) =>
   useMutation({
     mutationFn: async (data) => {
@@ -42,6 +55,7 @@ const taskDelete = (token) =>
 const TaskService = {
   taskIndex,
   taskStore,
+  taskUpdate,
   taskDelete,
 };
 

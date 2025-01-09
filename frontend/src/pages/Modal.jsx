@@ -1,30 +1,59 @@
 import { useForm } from "react-hook-form";
 import TaskService from "../services/Task";
 import { useAuth } from "../contexts/AuthContext";
+import { useEffect } from "react";
+import PropTypes from "prop-types";
 
-const Modal = ({ isOpen, onClose, title }) => {
-  const {
-    handleSubmit,
-    register,
-    formState: { errors },
-  } = useForm();
+const Modal = ({ type, isOpen, onClose, title, task }) => {
+  const { handleSubmit, register, reset } = useForm();
 
   const { token } = useAuth();
 
   const taskStoreMutation = TaskService.taskStore(token);
+  const taskUpdateMutation = TaskService.taskUpdate(token);
   const taskIndexQuery = TaskService.taskIndex(token);
 
   const onSubmit = async (data) => {
-    try {
-      data.user_id = 1;
-      await taskStoreMutation.mutateAsync(data); // Submit data
-      taskIndexQuery.refetch();
-      onClose(); // Tutup modal setelah submit berhasil
-    } catch (error) {
-      console.error("Error submitting data:", error);
-      // Anda bisa menambahkan logika error handling di sini
+    data.user_id = 1;
+
+    if (type == "store") {
+      try {
+        await taskStoreMutation.mutateAsync(data);
+        taskIndexQuery.refetch();
+        onClose();
+      } catch (error) {
+        console.error("Error submitting data:", error);
+      }
+    } else if (type == "update") {
+      data.id = task.id;
+      const { id, ...rest } = data;
+      const temp = {
+        id,
+        data: rest,
+      };
+
+      try {
+        await taskUpdateMutation.mutateAsync(temp);
+        taskIndexQuery.refetch();
+        onClose();
+      } catch (error) {
+        console.error("Error submitting data:", error);
+      }
     }
   };
+
+  useEffect(() => {
+    if (type == "update") {
+      const { title, description, deadline, status } = task;
+
+      reset({
+        title,
+        description,
+        deadline,
+        status,
+      });
+    }
+  }, [type, reset, task]);
 
   if (!isOpen) return null;
 
@@ -44,7 +73,9 @@ const Modal = ({ isOpen, onClose, title }) => {
         <div className="mt-4">
           <div className="absolute inset-0 w-full max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Tambah Tasklist</h2>
+              <h2 className="text-xl font-bold">
+                {type == "store" ? "Tambah" : "Edit"} Tasklist
+              </h2>
               <button
                 className="text-gray-400 hover:text-gray-600 text-lg"
                 onClick={onClose}
@@ -122,7 +153,7 @@ const Modal = ({ isOpen, onClose, title }) => {
                   type="submit"
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600"
                 >
-                  Tambah Data
+                  {type == "store" ? "Tambah" : "Edit"} Data
                 </button>
               </div>
             </form>
@@ -140,6 +171,14 @@ const Modal = ({ isOpen, onClose, title }) => {
       </div>
     </div>
   );
+};
+
+Modal.propTypes = {
+  type: PropTypes.string,
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func.isRequired,
+  title: PropTypes.string,
+  task: PropTypes.object,
 };
 
 export default Modal;

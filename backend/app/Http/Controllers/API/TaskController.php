@@ -60,7 +60,7 @@ class TaskController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'deadline' => 'nullable|date',
-            'status' => 'nullable|string|in:pending,in_progress,completed',
+            'status' => 'nullable|string|in:pending,in-progress,completed',
         ]);
 
         // Update tugas dengan data baru

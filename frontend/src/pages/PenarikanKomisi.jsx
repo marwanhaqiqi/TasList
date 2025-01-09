@@ -8,42 +8,34 @@ import ActionDropdown from "./ActionDropdown";
 const Dashboard = () => {
   const token = localStorage.getItem("token");
   const taskIndexQuery = TaskService.taskIndex(token);
+  const taskDeleteMutation = TaskService.taskDelete(token);
+  const [temp, setTemp] = useState({});
 
   const { name, logout } = useAuth();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalStoreOpen, setIsModalStoreOpen] = useState(false);
+  const [isModalUpdateOpen, setIsModalUpdateOpen] = useState(false);
 
-  const handleOpenModal = () => setIsModalOpen(true);
+  const taskUpdateMutation = TaskService.taskUpdate(token);
 
-  const handleCloseModal = () => setIsModalOpen(false);
-
-  // const handleUpdateTaskStatus = async (taskId, status) => {
-  //   try {
-  //     await TaskService.taskUpdate(token, taskId, { status });
-  //     taskIndexQuery.refetch(); // Refresh data setelah update
-  //   } catch (error) {
-  //     console.error("Gagal mengupdate status:", error);
-  //   }
-  // };
-
-  const handleUpdateTaskStatus = async (taskId, status) => {
+  const handleUpdateTaskStatus = async (taskId, { title, status }) => {
     try {
-      await TaskService.taskUpdate(token).mutateAsync({
+      await taskUpdateMutation.mutateAsync({
         id: taskId,
-        data: { status },
+        data: { user_id: 1, title, status },
       });
-      taskIndexQuery.refetch(); // Refresh data setelah update
+      taskIndexQuery.refetch();
     } catch (error) {
       console.error("Gagal mengupdate status:", error);
     }
   };
 
-  const handleDeleteTask = async (taskId) => {
+  const handleDeleteTask = async (id) => {
     try {
-      await TaskService.taskDelete(token, taskId);
-      taskIndexQuery.refetch(); // Refresh data setelah delete
+      await taskDeleteMutation.mutateAsync(id);
+      taskIndexQuery.refetch();
     } catch (error) {
-      console.error("Gagal menghapus task:", error);
+      console.error("Error deleting data:", error);
     }
   };
 
@@ -80,14 +72,25 @@ const Dashboard = () => {
           />
           <button
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-            onClick={handleOpenModal}
+            onClick={() => setIsModalStoreOpen(true)}
           >
             Tambah Data
           </button>
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} />
+      <Modal
+        type="store"
+        isOpen={isModalStoreOpen}
+        onClose={() => setIsModalStoreOpen(false)}
+      />
+
+      <Modal
+        type="update"
+        isOpen={isModalUpdateOpen}
+        onClose={() => setIsModalUpdateOpen(false)}
+        task={temp}
+      />
 
       <table className="w-full border-collapse">
         <thead>
@@ -111,9 +114,16 @@ const Dashboard = () => {
               <td className="border px-4 py-2">
                 <ActionDropdown
                   onChangeStatus={(status) =>
-                    handleUpdateTaskStatus(task.id, status)
+                    handleUpdateTaskStatus(task.id, {
+                      title: task.title,
+                      status,
+                    })
                   }
                   onDelete={() => handleDeleteTask(task.id)}
+                  onEdit={() => {
+                    setIsModalUpdateOpen(true);
+                    setTemp(task);
+                  }}
                 />
               </td>
             </tr>
